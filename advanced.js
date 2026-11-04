@@ -51,7 +51,7 @@ function paintUnified(){
  const label=n=>n<.96?'Menyempit':n>1.04?'Melebar':'Mendekati acuan';
  for(const id of ['systemic','afferent','efferent'])$(id+'Label').textContent=label(c[id]);
  $('systemicLumen').setAttribute('d',vesselContour(40,740,72,24*c.systemic));$('afferentLumen').setAttribute('d',vesselContour(40,300,215,20*c.afferent));$('efferentLumen').setAttribute('d',vesselContour(480,740,215,20*c.efferent));$('renalAfferent').setAttribute('stroke-width',18*c.afferent);$('renalEfferent').setAttribute('stroke-width',12*c.efferent);
- $('hormoneDiagramLabel').textContent='ADH efektif: '+Math.round(c.adh);renderHormoneParticles();paintMicturition();paintExperiment();
+ renderHormoneNephron();$('hormoneDiagramLabel').textContent='ADH efektif: '+Math.round(c.adh);renderHormoneParticles();paintMicturition();paintExperiment();
 }
 function saveBaseline(){labState.baseline={...labState.current};labState.history=[{time:labState.time,...labState.current}];paintExperiment()}
 function paintExperiment(){
@@ -165,3 +165,19 @@ function showAppTab(hormones){
 $('atlasMainTab').onclick=()=>showAppTab(false);$('hormoneMainTab').onclick=()=>showAppTab(true);
 for(const id of ['atlasMainTab','hormoneMainTab'])$(id).addEventListener('keydown',e=>{if(['ArrowLeft','ArrowRight','Home','End'].includes(e.key)){e.preventDefault();const h=e.key==='End'||(e.key!=='Home'&&id==='atlasMainTab');showAppTab(h);$(h?'hormoneMainTab':'atlasMainTab').focus()}});
 $('hormoneTimeToggle').onclick=()=>{$('experimentPlay').onclick();renderProductionRate()};$('hormoneTimeStep').onclick=()=>advanceMinute(1);
+
+function renderHormoneNephron(){
+ const c=labState.current;if(!c)return;const focus=window.hnFocus||'adh';
+ const info={adh:['ADH · duktus kolektivus','ADH mengatur permeabilitas air melalui AQP2. Respons reabsorpsi air meningkat saat ADH efektif naik; air bergerak dari tubulus kembali ke darah.'],aldo:['Aldosteron · nefron distal','Aldosteron meningkatkan reabsorpsi Na⁺ dan sekresi K⁺ pada nefron distal. Air yang mengikuti juga bergantung pada ADH dan kondisi tubuh.'],ang2:['Angiotensin II · arteriol glomerulus','Perhatikan diameter aferen dan eferen. Respons angiotensin II memengaruhi resistensi, aliran darah, dan filtrasi; hubungan tidak selalu linear.'],anp:['ANP · filtrasi & ekskresi Na⁺','ANP mendorong pelepasan Na⁺ dan air. Dalam model, reabsorpsi Na⁺ menurun dan perubahan pembuluh ikut menentukan filtrasi serta urin akhir.']};
+ $('hnHormoneTitle').textContent=info[focus][0];$('hnExplanation').textContent=info[focus][1];
+ $('hnAfferent').setAttribute('stroke-width',16*c.afferent);$('hnEfferent').setAttribute('stroke-width',12*c.efferent);
+ $('hnCollectHighlight').setAttribute('opacity',focus==='adh'||focus==='anp'?.27:.05);$('hnDistalHighlight').setAttribute('opacity',focus==='aldo'?.3:.03);$('hnGlomHighlight').setAttribute('opacity',focus==='ang2'||focus==='anp'?.8:0);
+ for(const [id,name,score,path] of [['hnWaterParticles','Air',c.water,'M594 205H689'],['hnSodiumParticles','Natrium',c.sodium,'M594 267H689'],['hnPotassiumParticles','Kalium',c.potassium,'M689 329H594']]){
+ const el=$(id);if(!el.dataset?.ready){el.innerHTML=Array.from({length:6},(_,j)=>`<g class="hn-particle" style="offset-path:path('${path}');animation-delay:-${j*.5}s"><g fill="${molecules[name].color}" stroke="#10171c" stroke-width="1">${molecules[name].icon}</g></g>`).join('');if(el.dataset)el.dataset.ready='true'}
+ el.style.setProperty('--hn-duration',(5-score*.035)+'s');el.style.opacity=.25+.75*score/100;
+ }
+ $('hnResponses').innerHTML=[['Reabsorpsi air',c.water],['Reabsorpsi Na⁺',c.sodium],['Sekresi K⁺',c.potassium],['Filtration',c.gfr]].map(([n,v])=>`<div class="hn-response"><span>${n==='Filtration'?'Filtrasi glomerulus':n}</span><strong>${Math.round(v)}/100</strong><div><i style="width:${limit(v)}%"></i></div></div>`).join('');
+}
+document.querySelectorAll('[data-hn]').forEach(b=>b.onclick=()=>{window.hnFocus=b.dataset.hn;document.querySelectorAll('[data-hn]').forEach(t=>t.setAttribute('aria-pressed',String(t===b)));renderHormoneNephron()});
+$('hnMotion').onclick=()=>{const paused=$('hnMotion').getAttribute('aria-pressed')==='true';$('hnMotion').setAttribute('aria-pressed',String(!paused));$('hnMotion').textContent=paused?'Lanjutkan gerak molekul':'Jeda gerak molekul';$('hnDiagram').classList.toggle('hn-paused',paused)};
+renderHormoneNephron();
