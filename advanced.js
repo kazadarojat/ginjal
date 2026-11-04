@@ -115,7 +115,7 @@ function urineColor(index){
 function renderBladderSensation(){
  const c=labState.current;if(!c)return;const urge=urgeForVolume(volume),color=urineColor(c.concentration),rate=productionRate(c.urineVolume);
  $('urgeLevel').textContent=urge.title;$('urgeDescription').textContent=urge.description;$('urgeCard').setAttribute('data-level',urge.level);
- renderOrganBladder(c,urge,color);$('senseVolume').value=volume;$('senseVolumeValue').textContent=Math.round(volume)+' mL';$('senseBladderVolume').textContent=Math.round(volume)+' mL';
+ renderMiksiIllustration(color);renderOrganBladder(c,urge,color);$('senseVolume').value=volume;$('senseVolumeValue').textContent=Math.round(volume)+' mL';$('senseBladderVolume').textContent=Math.round(volume)+' mL';
  for(const [id,bottom,height] of [['senseBladderFill',235,195],['rateBladderFill',217,65]]){$(id).setAttribute('y',bottom-height*volume/600);$(id).setAttribute('height',height*volume/600)}
  for(const id of ['senseBladderFill','rateBladderFill','labBladderFill','bladderWater']){$(id).setAttribute('fill',color);$(id).setAttribute('opacity',1)}
  $('comparisonCurrent').style.backgroundColor=color;$('comparisonCurrentLabel').textContent='Saat ini · '+Math.round(c.concentration)+'/100';$('urineSample').style.backgroundColor=color;$('colorVialLiquid').style.backgroundColor=color;$('colorScaleMarker').style.left=limit(c.concentration)+'%';
@@ -143,3 +143,18 @@ function renderOrganBladder(c,urge,color){
 }
 $('organVolumeSlider').addEventListener('input',e=>{volume=+e.target.value;paintMicturition()});
 $('organWaterSlider').addEventListener('input',e=>{factorValues.water=+e.target.value;updateFactors()});
+
+function renderMiksiIllustration(color){
+ $('miksiLiquid').setAttribute('y',145-115*volume/600);$('miksiLiquid').setAttribute('height',115*volume/600);$('miksiLiquid').setAttribute('fill',color);$('miksiVolume').textContent=Math.round(volume)+' mL';
+ for(const id of ['miksiFlow','miksiJet']){$(id).setAttribute('stroke',color);$(id).setAttribute('visibility',labState.voiding?'visible':'hidden')}
+ $('miksiGate').setAttribute('stroke-width',labState.voiding?3:9);$('miksiDiagram').classList.toggle('is-voiding',labState.voiding);
+ $('miksiLive').textContent=labState.voiding?'Miksi aktif: detrusor berkontraksi, saluran keluar relaks, urin keluar melalui meatus.':volume===0?'Vesika kosong pada model; aliran berhenti.':'Penyimpanan / menahan: tidak ada aliran keluar. Gunakan demo atau koordinasikan miksi melalui laboratorium.';
+}
+function setMiksiAnatomy(female){
+ $('maleAnatomy').classList.toggle('hidden',female);$('femaleAnatomy').classList.toggle('hidden',!female);$('miksiMale').setAttribute('aria-pressed',String(!female));$('miksiFemale').setAttribute('aria-pressed',String(female));
+ const path=female?'M150 142V230':'M150 142V190Q136 215 163 228L258 274';$('miksiUrethra').setAttribute('d',path);$('miksiFlow').setAttribute('d',path);$('miksiJet').setAttribute('d',female?'M150 230Q90 270 60 322':'M258 274Q294 291 305 323');
+ $('miksiDiagram').setAttribute('aria-label',female?'Urin dari vesika melalui uretra pendek ke muara di vestibulum vulva; vagina terpisah':'Urin dari vesika melalui uretra, prostat, dan penis hingga keluar di glans');
+}
+$('miksiMale').onclick=()=>setMiksiAnatomy(false);$('miksiFemale').onclick=()=>setMiksiAnatomy(true);
+$('miksiDemo').onclick=()=>{volume=300;labState.somatic=true;factorValues.parasympathetic=90;factorValues.sympathetic=10;updateFactors();requestMicturition()};
+$('miksiStop').onclick=()=>{labState.somatic=false;labState.voiding=false;paintMicturition()};
