@@ -46,7 +46,7 @@ function paintUnified(){
  hormoneState={water:c.water,sodium:c.sodium,potassium:c.potassium,urineVolume:c.urineVolume,concentration:c.concentration};factorState={...factorState,production:c.urineVolume,concentration:c.concentration};
  $('hormoneResults').innerHTML=[['Reabsorpsi air',c.water],['Reabsorpsi Na⁺',c.sodium],['Sekresi K⁺',c.potassium],['Volume urin',c.urineVolume],['Kepekatan urin',c.concentration]].map(([name,v])=>`<div class="hormone-result"><div><span>${name}</span><strong>${Math.round(v)}<small> / 100</small></strong></div><div class="response-track"><span style="width:${limit(v)}%"></span><i title="Acuan 50"></i></div><p>Respons gabungan saat ini · acuan 50</p></div>`).join('');
  const trend=c.urineVolume<45?'Cenderung berkurang':c.urineVolume>55?'Cenderung bertambah':'Mendekati acuan';
- $('urineTrend').textContent=trend;$('hormoneSummary').textContent='Hasil terpadu: hormon efektif, tonus pembuluh, tekanan, asupan air, keringat, simpatis, dan efek diuretik. Nilai 0–100 adalah indeks relatif.';$('urineSample').style.height=(34+c.urineVolume*.6)+'px';$('urineSample').style.backgroundColor=`hsl(43 90% ${76-c.concentration*.43}%)`;
+ $('urineTrend').textContent=trend;$('hormoneSummary').textContent='Hasil terpadu: hormon efektif, tonus pembuluh, tekanan, asupan air, keringat, simpatis, dan efek diuretik. Nilai 0–100 adalah indeks relatif.';$('urineSample').style.height=(34+c.urineVolume*.6)+'px';$('urineSample').style.backgroundColor=urineColor(c.concentration);
  $('factorProduction').textContent=trend+' · indeks '+Math.round(c.urineVolume)+'/100';$('factorProductionBar').style.width=c.urineVolume+'%';$('factorProductionText').textContent='Satu hasil gabungan dengan panel hormon dan hemodinamika. Parasimpatis tidak menambah produksi secara langsung.';$('organProductionLabel').textContent='Produksi urin: '+trend.toLowerCase();
  const label=n=>n<.96?'Menyempit':n>1.04?'Melebar':'Mendekati acuan';
  for(const id of ['systemic','afferent','efferent'])$(id+'Label').textContent=label(c[id]);
@@ -106,16 +106,21 @@ renderBladderSensation();
 $('rateToggle').onclick=()=>{$('experimentPlay').onclick();renderProductionRate()};$('rateStep').onclick=()=>advanceMinute(1);renderProductionRate();
 
 function urgeForVolume(v){return v>=400?{level:3,title:'Kebelet kuat',description:'Regangan meningkat: dorongan berkemih semakin kuat.'}:v>=250?{level:2,title:'Ingin berkemih',description:'Dorongan berkemih terasa jelas; kontrol volunter masih berperan.'}:v>=150?{level:1,title:'Mulai terasa',description:'Sensasi awal pengisian vesika mulai muncul.'}:{level:0,title:'Belum terasa',description:'Volume masih rendah pada contoh ambang model ini.'}}
-function urineColor(index){return `hsl(${54-limit(index)*.16} 92% ${88-limit(index)*.47}%)`}
+function urineColor(index){
+ const stops=[[0,[255,254,245]],[35,[255,251,196]],[50,[255,213,42]],[65,[163,101,13]],[100,[88,48,10]]],v=limit(index);
+ const upper=stops.findIndex(s=>s[0]>=v);if(upper<=0)return 'rgb(255, 254, 245)';
+ const [lo,a]=stops[upper-1],[hi,b]=stops[upper],t=(v-lo)/(hi-lo);
+ return 'rgb('+a.map((n,i)=>Math.round(n+(b[i]-n)*t)).join(', ')+')';
+}
 function renderBladderSensation(){
  const c=labState.current;if(!c)return;const urge=urgeForVolume(volume),color=urineColor(c.concentration),rate=productionRate(c.urineVolume);
  $('urgeLevel').textContent=urge.title;$('urgeDescription').textContent=urge.description;$('urgeCard').setAttribute('data-level',urge.level);
  renderOrganBladder(c,urge,color);$('senseVolume').value=volume;$('senseVolumeValue').textContent=Math.round(volume)+' mL';$('senseBladderVolume').textContent=Math.round(volume)+' mL';
  for(const [id,bottom,height] of [['senseBladderFill',235,195],['rateBladderFill',217,65]]){$(id).setAttribute('y',bottom-height*volume/600);$(id).setAttribute('height',height*volume/600)}
- for(const id of ['senseBladderFill','rateBladderFill','labBladderFill','bladderWater']){$(id).setAttribute('fill',color);$(id).setAttribute('opacity',.92)}
+ for(const id of ['senseBladderFill','rateBladderFill','labBladderFill','bladderWater']){$(id).setAttribute('fill',color);$(id).setAttribute('opacity',1)}
  $('urineSample').style.backgroundColor=color;$('colorVialLiquid').style.backgroundColor=color;$('colorScaleMarker').style.left=limit(c.concentration)+'%';
  $('concentrationValue').textContent='Indeks kepekatan '+Math.round(c.concentration)+'/100';
- $('urineColorDescription').textContent=(c.concentration<40?'Kuning pucat · cenderung encer':c.concentration>65?'Kuning tua / amber · cenderung pekat':'Kuning · kepekatan menengah')+'. Warna mengikuti keadaan saat ini, bukan hanya posisi penggeser air.';
+ $('urineColorDescription').textContent=(c.concentration<40?'Kuning sangat pucat mendekati putih · cenderung encer':c.concentration>65?'Kuning gelap mendekati cokelat · cenderung pekat':'Kuning · kepekatan menengah')+'. Warna mengikuti keadaan saat ini, bukan hanya posisi penggeser air.';
  $('senseWater').value=factorValues.water;$('senseWaterValue').textContent=factorValues.water+'/100';
  const next=volume<150?150:volume<250?250:400;
  $('urgeEta').textContent=labState.voiding?'Miksi sedang berlangsung: sensasi akan berkurang saat volume turun.':volume>=400?'Ambang kebelet kuat pada model telah tercapai.':rate>0?'Jika laju tetap, ambang '+next+' mL tercapai sekitar '+rateNumber((next-volume)/rate,0)+' menit model lagi.':'Tidak ada pengisian pada laju nol.';
@@ -132,7 +137,7 @@ function renderOrganBladder(c,urge,color){
  $('organVolumeText').textContent=Math.round(volume)+' mL';$('organVolumeSlider').value=volume;$('organVolumeOutput').textContent=Math.round(volume)+' mL';
  $('organWaterSlider').value=factorValues.water;$('organWaterOutput').textContent=factorValues.water+'/100';
  $('organUrgeText').textContent=urge.title;$('organUrgeDot').setAttribute('fill',['#20c9ed','#7edb73','#ffc239','#ff7956'][urge.level]);
- const shade=c.concentration<40?'Kuning pucat':c.concentration>65?'Amber / pekat':'Kuning';
+ const shade=c.concentration<40?'Kuning pucat':c.concentration>65?'Kuning gelap / cokelat':'Kuning';
  $('organColorText').textContent=shade+' · kepekatan '+Math.round(c.concentration)+'/100';$('organColorText').setAttribute('fill',color);
  $('organInlineStatus').textContent=Math.round(volume)+' mL · '+urge.title+' · '+shade+'. '+(labState.voiding?'Vesika sedang dikosongkan.':'Jalankan waktu untuk melihat pengisian dari produksi ginjal.');
 }
