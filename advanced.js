@@ -145,6 +145,7 @@ $('organVolumeSlider').addEventListener('input',e=>{volume=+e.target.value;paint
 $('organWaterSlider').addEventListener('input',e=>{factorValues.water=+e.target.value;updateFactors()});
 
 function renderMiksiIllustration(color){
+ renderMiksiNerves();
  $('miksiLiquid').setAttribute('y',145-115*volume/600);$('miksiLiquid').setAttribute('height',115*volume/600);$('miksiLiquid').setAttribute('fill',color);$('miksiVolume').textContent=Math.round(volume)+' mL';
  for(const id of ['miksiFlow','miksiJet']){$(id).setAttribute('stroke',color);$(id).setAttribute('visibility',labState.voiding?'visible':'hidden')}
  $('miksiGate').setAttribute('stroke-width',labState.voiding?3:9);$('miksiDiagram').classList.toggle('is-voiding',labState.voiding);
@@ -181,3 +182,11 @@ function renderHormoneNephron(){
 document.querySelectorAll('[data-hn]').forEach(b=>b.onclick=()=>{window.hnFocus=b.dataset.hn;document.querySelectorAll('[data-hn]').forEach(t=>t.setAttribute('aria-pressed',String(t===b)));renderHormoneNephron()});
 $('hnMotion').onclick=()=>{const paused=$('hnMotion').getAttribute('aria-pressed')==='true';$('hnMotion').setAttribute('aria-pressed',String(!paused));$('hnMotion').textContent=paused?'Lanjutkan gerak molekul':'Jeda gerak molekul';$('hnDiagram').classList.toggle('hn-paused',paused)};
 renderHormoneNephron();
+
+function renderMiksiNerves(){
+ const voiding=labState.voiding,ready=factorValues.parasympathetic>factorValues.sympathetic+20;
+ $('neuralDiagram').classList.toggle('neural-voiding',voiding);
+ for(const [id,active] of [['nerveSymp',!ready],['nervePelvic',ready],['nervePudendal',!labState.somatic],['nerveAfferent',volume>=150]]){$(id).setAttribute('opacity',active?1:.22);$(id).classList.toggle('nerve-active',active)}
+ $('nerveDetrusor').setAttribute('stroke',voiding?'#32dc7c':'#20c9ed');$('nerveInternal').setAttribute('stroke-width',ready?3:7);$('nerveExternal').setAttribute('stroke-width',labState.somatic?3:8);$('nerveFloor').setAttribute('opacity',voiding?.45:1);$('nerveUrine').setAttribute('visibility',voiding?'visible':'hidden');
+ $('nerveStatus').innerHTML=[['M. detrusor',voiding?'Berkontraksi':'Relaks / belum mengosongkan'],['Leher vesika',ready?'Tonus menurun / siap relaks':'Menahan aliran'],['Sfingter eksternal',labState.somatic?'Relaks · izin volunter':'Berkontraksi · menahan'],['Dasar panggul',voiding?'Relaks terkoordinasi (ilustrasi)':'Menopang / kontinensia']].map(([n,t])=>`<div><strong>${n}</strong><span>${t}</span></div>`).join('');
+}
