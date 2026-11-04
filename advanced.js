@@ -110,7 +110,7 @@ function urineColor(index){return `hsl(${54-limit(index)*.16} 92% ${88-limit(ind
 function renderBladderSensation(){
  const c=labState.current;if(!c)return;const urge=urgeForVolume(volume),color=urineColor(c.concentration),rate=productionRate(c.urineVolume);
  $('urgeLevel').textContent=urge.title;$('urgeDescription').textContent=urge.description;$('urgeCard').setAttribute('data-level',urge.level);
- $('senseVolume').value=volume;$('senseVolumeValue').textContent=Math.round(volume)+' mL';$('senseBladderVolume').textContent=Math.round(volume)+' mL';
+ renderOrganBladder(c,urge,color);$('senseVolume').value=volume;$('senseVolumeValue').textContent=Math.round(volume)+' mL';$('senseBladderVolume').textContent=Math.round(volume)+' mL';
  for(const [id,bottom,height] of [['senseBladderFill',235,195],['rateBladderFill',217,65]]){$(id).setAttribute('y',bottom-height*volume/600);$(id).setAttribute('height',height*volume/600)}
  for(const id of ['senseBladderFill','rateBladderFill','labBladderFill','bladderWater']){$(id).setAttribute('fill',color);$(id).setAttribute('opacity',.92)}
  $('urineSample').style.backgroundColor=color;$('colorVialLiquid').style.backgroundColor=color;$('colorScaleMarker').style.left=limit(c.concentration)+'%';
@@ -124,3 +124,17 @@ $('senseVolume').addEventListener('input',e=>{volume=+e.target.value;paintMictur
 document.querySelectorAll('[data-sense-volume]').forEach(b=>b.onclick=()=>{volume=+b.dataset.senseVolume;paintMicturition()});
 $('senseWater').addEventListener('input',e=>{factorValues.water=+e.target.value;updateFactors()});
 renderBladderSensation();
+
+function renderOrganBladder(c,urge,color){
+ const y=445-93*volume/600;
+ $('bladderWater').setAttribute('y',y);$('bladderWater').setAttribute('height',93*volume/600);
+ $('organLiquidSurface').setAttribute('d',`M250 ${y}H400`);$('organLiquidSurface').setAttribute('visibility',volume>0?'visible':'hidden');
+ $('organVolumeText').textContent=Math.round(volume)+' mL';$('organVolumeSlider').value=volume;$('organVolumeOutput').textContent=Math.round(volume)+' mL';
+ $('organWaterSlider').value=factorValues.water;$('organWaterOutput').textContent=factorValues.water+'/100';
+ $('organUrgeText').textContent=urge.title;$('organUrgeDot').setAttribute('fill',['#20c9ed','#7edb73','#ffc239','#ff7956'][urge.level]);
+ const shade=c.concentration<40?'Kuning pucat':c.concentration>65?'Amber / pekat':'Kuning';
+ $('organColorText').textContent=shade+' · kepekatan '+Math.round(c.concentration)+'/100';$('organColorText').setAttribute('fill',color);
+ $('organInlineStatus').textContent=Math.round(volume)+' mL · '+urge.title+' · '+shade+'. '+(labState.voiding?'Vesika sedang dikosongkan.':'Jalankan waktu untuk melihat pengisian dari produksi ginjal.');
+}
+$('organVolumeSlider').addEventListener('input',e=>{volume=+e.target.value;paintMicturition()});
+$('organWaterSlider').addEventListener('input',e=>{factorValues.water=+e.target.value;updateFactors()});
