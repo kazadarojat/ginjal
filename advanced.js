@@ -107,7 +107,7 @@ $('rateToggle').onclick=()=>{$('experimentPlay').onclick();renderProductionRate(
 
 function urgeForVolume(v){return v>=400?{level:3,title:'Kebelet kuat',description:'Regangan meningkat: dorongan berkemih semakin kuat.'}:v>=250?{level:2,title:'Ingin berkemih',description:'Dorongan berkemih terasa jelas; kontrol volunter masih berperan.'}:v>=150?{level:1,title:'Mulai terasa',description:'Sensasi awal pengisian vesika mulai muncul.'}:{level:0,title:'Belum terasa',description:'Volume masih rendah pada contoh ambang model ini.'}}
 function urineColor(index){
- const stops=[[0,[255,254,245]],[35,[255,251,196]],[50,[255,213,42]],[65,[163,101,13]],[100,[88,48,10]]],v=limit(index);
+ const stops=[[0,[255,254,245]],[40,[255,253,218]],[50,[255,215,46]],[60,[124,77,8]],[100,[88,48,10]]],v=limit(index);
  const upper=stops.findIndex(s=>s[0]>=v);if(upper<=0)return 'rgb(255, 254, 245)';
  const [lo,a]=stops[upper-1],[hi,b]=stops[upper],t=(v-lo)/(hi-lo);
  return 'rgb('+a.map((n,i)=>Math.round(n+(b[i]-n)*t)).join(', ')+')';
@@ -118,7 +118,7 @@ function renderBladderSensation(){
  renderOrganBladder(c,urge,color);$('senseVolume').value=volume;$('senseVolumeValue').textContent=Math.round(volume)+' mL';$('senseBladderVolume').textContent=Math.round(volume)+' mL';
  for(const [id,bottom,height] of [['senseBladderFill',235,195],['rateBladderFill',217,65]]){$(id).setAttribute('y',bottom-height*volume/600);$(id).setAttribute('height',height*volume/600)}
  for(const id of ['senseBladderFill','rateBladderFill','labBladderFill','bladderWater']){$(id).setAttribute('fill',color);$(id).setAttribute('opacity',1)}
- $('urineSample').style.backgroundColor=color;$('colorVialLiquid').style.backgroundColor=color;$('colorScaleMarker').style.left=limit(c.concentration)+'%';
+ $('comparisonCurrent').style.backgroundColor=color;$('comparisonCurrentLabel').textContent='Saat ini · '+Math.round(c.concentration)+'/100';$('urineSample').style.backgroundColor=color;$('colorVialLiquid').style.backgroundColor=color;$('colorScaleMarker').style.left=limit(c.concentration)+'%';
  $('concentrationValue').textContent='Indeks kepekatan '+Math.round(c.concentration)+'/100';
  $('urineColorDescription').textContent=(c.concentration<40?'Kuning sangat pucat mendekati putih · cenderung encer':c.concentration>65?'Kuning gelap mendekati cokelat · cenderung pekat':'Kuning · kepekatan menengah')+'. Warna mengikuti keadaan saat ini, bukan hanya posisi penggeser air.';
  $('senseWater').value=factorValues.water;$('senseWaterValue').textContent=factorValues.water+'/100';
